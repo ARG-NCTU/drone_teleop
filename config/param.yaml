@@ -1,0 +1,3 @@
+max_linear: 4.0
+max_trottle: 2.0
+max_angular: 2.0

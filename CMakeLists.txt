@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   roscpp
   sensor_msgs
+  mavros_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -120,6 +121,11 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/bin)
+set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+
+add_executable(drone_teleop src/drone_teleop.cpp)
+target_link_libraries(drone_teleop ${catkin_LIBRARIES})
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/drone_teleop.cpp
