@@ -1,3 +1,7 @@
-max_linear: 4.0
-max_trottle: 2.0
-max_angular: 2.0
+highspeed_linear: 4.0
+highspeed_trottle: 2.0
+highspeed_angular: 2.0
+
+lowspeed_linear: 1.0
+lowspeed_trottle: 0.5
+lowspeed_angular: 0.5

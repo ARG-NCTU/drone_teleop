@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
   mavros_msgs
+  behavior_tree
 )
 
 ## System dependencies are found with CMake's conventions
