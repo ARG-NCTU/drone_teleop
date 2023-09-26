@@ -8,7 +8,6 @@
 #include <mavros_msgs/CommandBool.h>
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/CommandTOL.h>
-#include <behavior_tree/behavior_tree.h>
 
 using namespace std; 
 
@@ -62,7 +61,6 @@ class Controller{
         int m_buttons[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};  
 
     public:
-        bt::Condition condition;
         Controller();
         void getParam();
         void joyCallback(const sensor_msgs::Joy::ConstPtr& msg);
@@ -74,7 +72,7 @@ class Controller{
         void control();
 };
 
-Controller :: Controller() : condition("manual_trigger"){
+Controller :: Controller(){
     sub_joy = n.subscribe<sensor_msgs::Joy>("joy", 1,  &Controller::joyCallback, this);
     pub_twist = n.advertise<geometry_msgs::Twist>("drone_twist", 10);
     
@@ -122,11 +120,7 @@ void Controller :: joyCallback(const sensor_msgs::Joy::ConstPtr& msg){
 
     // mode & arming
     bool state = 0;
-    if(m_buttons[0] == 1){
-        condition.set(true);
-        condition.publish();
-    }
-    state = 0;
+    
     if(m_buttons[1] == 1){
         while(!state){ state = srvArming(); }
     }
