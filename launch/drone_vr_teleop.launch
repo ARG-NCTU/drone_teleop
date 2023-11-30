@@ -1,0 +1,9 @@
+<launch>
+    <arg name="joy_dev" default="/dev/input/js0" />
+    <arg name="joy_topic" default="joy" />
+
+    <node pkg="drone_teleop" type="drone_vr_teleop" name="drone_vr_teleop" clear_params="true" output="screen">
+        <remap from="drone_twist" to="mavros/setpoint_velocity/cmd_vel_unstamped"/>
+        <rosparam file="$(find drone_teleop)/config/param.yaml"/>
+    </node>
+</launch>

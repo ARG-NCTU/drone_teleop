@@ -126,6 +126,9 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 
 add_executable(drone_teleop src/drone_teleop.cpp)
 target_link_libraries(drone_teleop ${catkin_LIBRARIES})
+
+add_executable(drone_vr_teleop src/drone_vr_teleop.cpp)
+target_link_libraries(drone_vr_teleop ${catkin_LIBRARIES})
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/drone_teleop.cpp
