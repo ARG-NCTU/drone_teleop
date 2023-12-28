@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="veh" default="/" />
+
+    <arg name="use_joy" default="true" />
+
+    <group ns="$(arg veh)">
+        <node pkg="joy" type="joy_node" name="joy" if="$(arg use_joy)">
+            <param name="dev" value="/dev/input/js0" />
+            <param name="deadzone" value="0.1" />
+            <param name="autorepeat_rate" value="10" />
+        </node>
+
+
+        <node pkg="drone_teleop" type="vr_mavlink_joy_teleop" name="vr_mavlink_joy_teleop"
+            output="screen">
+            <remap from="/joy" to="/vr_teleop" />
+            <remap from="~twist" to="/mavros/setpoint_velocity/cmd_vel_unstamped" />
+            <rosparam>
+                throttle_high_throttle: 2.0
+                throttle_high_linear: 5.0
+                throttle_high_angular: 1.0
+            </rosparam>
+        </node>
+
+        <!-- <node pkg="vrx_gazebo" type="mavros_track_wamv_uwb.py" name="mavros_track_wamv_uwb"
+        output="screen"/> -->
+    </group>
+</launch>
