@@ -133,6 +133,10 @@ target_link_libraries(drone_vr_teleop ${catkin_LIBRARIES})
 add_executable(vr_mavlink_joy_teleop src/vr_mavlink_joy_teleop.cpp)
 add_dependencies(vr_mavlink_joy_teleop ${catkin_EXPORTED_TARGETS})
 target_link_libraries(vr_mavlink_joy_teleop ${catkin_LIBRARIES})
+
+add_executable(mavros_kill_wrapper src/mavros_kill_wrapper.cpp)
+add_dependencies(mavros_kill_wrapper ${catkin_EXPORTED_TARGETS})
+target_link_libraries(mavros_kill_wrapper ${catkin_LIBRARIES})
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/drone_teleop.cpp
