@@ -1,7 +1,9 @@
-highspeed_linear: 1.0
-highspeed_trottle: 1.0
-highspeed_angular: 1.0
+highspeed_linear: 0.75
+highspeed_throttle: 0.75
+highspeed_angular: 1.25
 
-lowspeed_linear: 1.0
-lowspeed_trottle: 0.5
-lowspeed_angular: 0.5
+lowspeed_linear: 0.5
+lowspeed_throttle: 0.5
+lowspeed_angular: 1.0
+
+mode_switch: false

@@ -17,6 +17,7 @@ using namespace std;
 class Controller{
     private:
         ros::NodeHandle n;
+        ros::NodeHandle nh_private;
         ros::Subscriber sub_joy;
         ros::Publisher pub_twist;
 
@@ -38,11 +39,12 @@ class Controller{
         float m_lowspeed_angular = 0.5;
 
         bool enable_joy_output = true;
+        bool mode_switch = false;
 
         // {vr trigger + left_hand mushroom back/forth (For up/down), vr trigger + left_hand mushroom left/right (For rotate), vr trigger + left_hand mushroom back/forth (For move back and forth), vr gripper + left_hand mushroom left/right (For move left and right)}
         float m_axes[4] = {0.0, 0.0, 0.0, 0.0};
-        // {VR X(set_param & Arming & Offboard & flypose service), Y(Hover), A (for gripper), B (mannual/auto) } 
-        int m_buttons[4] = {0, 0, 0, 0};  
+        // {VR X(set_param & Arming & Offboard & flypose service), Y(Hover), A (for gripper), B (mannual/auto), left_grip_counter for high low speed } 
+        int m_buttons[5] = {0, 0, 0, 0, 0};  
 
     public:
         Controller();
@@ -58,7 +60,7 @@ class Controller{
         void control();
 };
 
-Controller :: Controller(){
+Controller :: Controller(): nh_private("~"){
     sub_joy = n.subscribe<sensor_msgs::Joy>("vr_joy_drone", 1,  &Controller::joyCallback, this);
     pub_twist = n.advertise<geometry_msgs::Twist>("drone_twist", 10);
     
@@ -73,20 +75,21 @@ Controller :: Controller(){
 }
 
 void Controller :: getParam(){
-    n.getParam("/drone_teleop/highspeed_linear",  m_highspeed_linear);
-    n.getParam("/drone_teleop/highspeed_throttle", m_highspeed_throttle);
-    n.getParam("/drone_teleop/highspeed_angular", m_highspeed_angular);
+    nh_private.getParam("highspeed_linear",  m_highspeed_linear);
+    nh_private.getParam("highspeed_throttle", m_highspeed_throttle);
+    nh_private.getParam("highspeed_angular", m_highspeed_angular);
 
-    n.getParam("/drone_teleop/lowspeed_linear",  m_lowspeed_linear);
-    n.getParam("/drone_teleop/lowspeed_throttle", m_lowspeed_throttle);
-    n.getParam("/drone_teleop/lowspeed_angular", m_lowspeed_angular);
+    nh_private.getParam("lowspeed_linear",  m_lowspeed_linear);
+    nh_private.getParam("lowspeed_throttle", m_lowspeed_throttle);
+    nh_private.getParam("lowspeed_angular", m_lowspeed_angular);
+    nh_private.getParam("mode_switch", mode_switch);
     return;
 }
 
 
 void Controller :: joyCallback(const sensor_msgs::Joy::ConstPtr& msg){
     for(int i=0; i<4; i++){ m_axes[i] = msg->axes[i]; }
-    for(int i=0; i<4; i++){ m_buttons[i] = msg->buttons[i]; }
+    for(int i=0; i<5; i++){ m_buttons[i] = msg->buttons[i]; }
 
     // mode & arming
     bool state_arm = 0;
@@ -94,6 +97,33 @@ void Controller :: joyCallback(const sensor_msgs::Joy::ConstPtr& msg){
     //bool state_land = 0; //no valid button for land
     bool state_hover = 0;
     bool flypose_response = 0;
+
+    // Check if all joy data is zero
+    bool allZero = true;
+    for(int i = 0; i < 4; i++){
+        if(m_axes[i] != 0.0){
+            allZero = false;
+            break;
+        }
+    }
+    allZero = false;
+    // If all data is zero, switch to position mode, otherwise switch to offboard mode
+    if(mode_switch && allZero){
+        ROS_INFO("Switching to Position Mode");
+        mavros_msgs::SetMode positionModeSrv;
+        positionModeSrv.request.custom_mode = "POSCTL"; 
+        if(srv_hover.call(positionModeSrv)){
+            ROS_INFO("Position mode set successfully");
+        }else{
+            ROS_ERROR("Failed to set position mode");
+        }
+    }else{
+        ROS_INFO("Switching to Offboard Mode");
+        if(!srvOffboard()){
+            ROS_ERROR("Failed to set offboard mode");
+        }
+    }
+
     
     if(m_buttons[0] == 1){
         //VR left hand button X
@@ -215,10 +245,16 @@ void Controller :: control(){
         // {rotate, up/down, left/right shift, forward/backward shift, 0, 0}
 
         float throttle, linear, angular;
-
-        throttle = m_highspeed_throttle;
-        linear  = m_highspeed_linear;
-        angular = m_highspeed_angular;
+        if(m_buttons[4] == 0){
+            throttle = m_lowspeed_throttle;
+            linear  = m_lowspeed_linear;
+            angular = m_lowspeed_angular;
+        }else{
+            throttle = m_highspeed_throttle;
+            linear  = m_highspeed_linear;
+            angular = m_highspeed_angular;
+        }
+        
 
         pub_msg_twist.linear.z = m_axes[0] * throttle;
         pub_msg_twist.angular.z = m_axes[1] * angular;
@@ -226,7 +262,6 @@ void Controller :: control(){
         pub_msg_twist.linear.y = m_axes[3] * linear;
         //ROS_INFO("Speed: %f, %f, %f, %f", pub_msg_twist.linear.x, pub_msg_twist.linear.y, pub_msg_twist.linear.z, pub_msg_twist.angular.z);
         pub_twist.publish(pub_msg_twist);
-            
     }
     rate.sleep();
     return;
