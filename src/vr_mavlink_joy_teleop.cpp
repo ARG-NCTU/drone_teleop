@@ -175,32 +175,32 @@ void Teleop::joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
         }
     }
 
-    if (isTrigger("LAND", msg))
-    {
-        ROS_INFO_STREAM("LAND");
-        if (srv_land_.exists())
-        {
-            mavros_msgs::CommandTOL srv;
-            srv.request.min_pitch = 0;
-            srv.request.yaw = 0;
-            srv.request.latitude = 0;
-            srv.request.longitude = 0;
-            srv.request.altitude = 0;
-            auto res = srv_land_.call(srv);
-            if (res)
-            {
-                ROS_INFO_STREAM("Land");
-            }
-            else
-            {
-                ROS_ERROR_STREAM("Land failed");
-            }
-        }
-        else
-        {
-            ROS_ERROR_STREAM("Land service does not exist");
-        }
-    }
+    // if (isTrigger("LAND", msg))
+    // {
+    //     ROS_INFO_STREAM("LAND");
+    //     if (srv_land_.exists())
+    //     {
+    //         mavros_msgs::CommandTOL srv;
+    //         srv.request.min_pitch = 0;
+    //         srv.request.yaw = 0;
+    //         srv.request.latitude = 0;
+    //         srv.request.longitude = 0;
+    //         srv.request.altitude = 0;
+    //         auto res = srv_land_.call(srv);
+    //         if (res)
+    //         {
+    //             ROS_INFO_STREAM("Land");
+    //         }
+    //         else
+    //         {
+    //             ROS_ERROR_STREAM("Land failed");
+    //         }
+    //     }
+    //     else
+    //     {
+    //         ROS_ERROR_STREAM("Land service does not exist");
+    //     }
+    // }
 
     if (isTrigger("INITIALMAVLINK", msg))
     {
@@ -237,13 +237,13 @@ void Teleop::joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
     {
         if (mode_ == "MANUAL")
         {
-            ROS_INFO_STREAM("MANUAL");
+            ROS_INFO_STREAM_THROTTLE(1, "MANUAL");
             trigger_.data = false;
             enable_ = true;
         }
         else if (mode_ == "AUTO")
         {
-            ROS_INFO_STREAM("AUTO");
+            ROS_INFO_STREAM_THROTTLE(1, "AUTO");
             enable_ = false;
             trigger_.data = true;
         }
@@ -253,7 +253,7 @@ void Teleop::joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
             if (axes_[axes_map_["MODE"]] != 2)
             {
                 enable_ = false;
-                ROS_INFO_STREAM("HOLD");
+                ROS_INFO_STREAM_THROTTLE(1, "HOLD");
                 if (srv_offboard_.exists())
                 {
                     mavros_msgs::SetMode srv;
@@ -312,10 +312,10 @@ void Teleop::initMaps()
     function_map_["MANUAL"] = std::string("MANUAL");
     function_map_["HOLD"] = std::string("HOLD");
 
-    function_map_["INITIALMAVLINK"] = std::string("X");
+    function_map_["INITIALMAVLINK"] = std::string("Y");
     function_map_["ARM"] = std::string("Y");
     function_map_["OFFBOARD"] = std::string("A");
-    function_map_["LAND"] = std::string("B");
+    // function_map_["LAND"] = std::string("B");
 
     axes_map_.clear();
     axes_map_["SELECT"] = 1;
