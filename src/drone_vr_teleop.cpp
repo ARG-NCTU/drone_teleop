@@ -16,7 +16,7 @@ using namespace std;
 
 /**
  * @file drone_vr_teleop.cpp
- * @brief ROS node for controlling a drone using VR joystick inputs.
+ * @brief ROS node for controlling a drone using VR joystick inputs, this code is for control px4 sitl drone.
  * 
  * This code defines a Controller class to manage drone teleoperation via VR joystick inputs.
  * 
@@ -38,6 +38,8 @@ using namespace std;
  * ROS Publishers:
  *  - pub_twist: Publishes twist messages to the "drone_twist" topic to control the drone's movement.
  *  - pub_speed_state: Publishes boolean messages to the "speed_state" topic to indicate high/low speed state.
+ *  - pub_enable_auto_mode_success: Publishes boolean messages to indicate the success of enabling auto mode.
+ *  - pub_object_in_hand_success: Publishes boolean messages to indicate the status of the object in hand.
  * 
  * ROS Service Clients:
  *  - srv_arming: Client for "mavros/cmd/arming" service to arm the drone.
@@ -56,7 +58,8 @@ class Controller{
         ros::Subscriber sub_joy;
         ros::Publisher pub_twist;
         ros::Publisher pub_speed_state;
-        ros::Publisher pub_enable_auto_mode_success_; //publish bt condition node of auto switch (by operator)
+        ros::Publisher pub_enable_auto_mode_success; //publish bt condition node of auto switch (by operator)
+        ros::Publisher pub_object_in_hand_success; //publish bt condition node of human check object in hand (by operator)
 
         ros::ServiceClient srv_arming;
         ros::ServiceClient srv_offboard;
@@ -77,13 +80,14 @@ class Controller{
 
         bool enable_joy_output = true;
         bool enable_auto_mode_success_ = false;
+        bool enable_object_in_hand_success_ = false;
         bool mode_switch = false;
 
         bool high_speed = false;
 
         // {vr trigger + left_hand mushroom back/forth (For up/down), vr trigger + left_hand mushroom left/right (For rotate), vr trigger + left_hand mushroom back/forth (For move back and forth), vr gripper + left_hand mushroom left/right (For move left and right)}
         float m_axes[4] = {0.0, 0.0, 0.0, 0.0};
-        // {VR X(set_param & Arming & Offboard & flypose service), Y(Hover), A (for gripper), B (mannual/auto), left_grip_counter for high low speed } 
+        // {VR X(set_param & Arming & Offboard & flypose service), Y(mannual/auto), A (for gripper), B (human check object in hand), left_grip_counter(for high low speed) } 
         int m_buttons[5] = {0, 0, 0, 0, 0};  
 
     public:
@@ -104,8 +108,8 @@ Controller :: Controller(): nh_private("~"){
     sub_joy = n.subscribe<sensor_msgs::Joy>("vr_joy_drone", 1,  &Controller::joyCallback, this);
     pub_twist = n.advertise<geometry_msgs::Twist>("drone_twist", 10);
     pub_speed_state = n.advertise<std_msgs::Bool>("speed_state", 10);//True for high speed, False for low speed
-    pub_enable_auto_mode_success_ = n.advertise<std_msgs::Bool>("/enable_auto_mode_success", 10);// True for auto mode enabled, False for auto mode disabled
-    
+    pub_enable_auto_mode_success = n.advertise<std_msgs::Bool>("/enable_auto_mode_success", 10);// True for auto mode enabled, False for auto mode disabled
+    pub_object_in_hand_success = n.advertise<std_msgs::Bool>("/object_in_hand_success", 10);// True for object in hand, False for no object in hand
 
     srv_arming = n.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
     srv_offboard = n.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
@@ -206,20 +210,24 @@ void Controller :: joyCallback(const sensor_msgs::Joy::ConstPtr& msg){
     }
 
     if(m_buttons[1] == 1){
-        //VR left hand button Y
-        while(!state_hover){ state_hover = srvHover(); }
-        // fly initial pose
-        flypose_response = srvFlypose();
-    }
-
-    if(m_buttons[3] == 1){
-        //VR right hand button B push count
+        //VR left hand button Y count
         enable_auto_mode_success_ = true; 
         
     }
-    else if(m_buttons[3] == 0){
+    else if(m_buttons[1] == 0){
         enable_auto_mode_success_ = false;
     }
+
+    if(m_buttons[3] == 1){
+        //VR right hand button B count
+        enable_object_in_hand_success_ = true; 
+        
+    }
+    else if(m_buttons[3] == 0){
+        enable_object_in_hand_success_ = false;
+    }
+
+
 
     return;
 }
@@ -311,7 +319,10 @@ void Controller :: control(){
         pub_speed_state.publish(speed_state);
         std_msgs::Bool enable_auto_mode;
         enable_auto_mode.data = enable_auto_mode_success_;
-        pub_enable_auto_mode_success_.publish(enable_auto_mode);
+        pub_enable_auto_mode_success.publish(enable_auto_mode);
+        std_msgs::Bool object_in_hand;
+        object_in_hand.data = enable_object_in_hand_success_;
+        pub_object_in_hand_success.publish(object_in_hand);
 
     }
     rate.sleep();
