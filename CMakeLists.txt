@@ -141,6 +141,11 @@ target_link_libraries(mavros_kill_wrapper ${catkin_LIBRARIES})
 add_executable(drone_ardupilot_teleop src/drone_ardupilot_teleop.cpp)
 add_dependencies(drone_ardupilot_teleop ${catkin_EXPORTED_TARGETS})
 target_link_libraries(drone_ardupilot_teleop ${catkin_LIBRARIES})
+
+add_executable(aerial_manipulation_teleop src/aerial_manipulation_teleop.cpp)
+add_dependencies(aerial_manipulation_teleop ${catkin_EXPORTED_TARGETS})
+target_link_libraries(aerial_manipulation_teleop ${catkin_LIBRARIES})
+
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/drone_teleop.cpp
