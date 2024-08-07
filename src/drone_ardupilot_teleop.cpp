@@ -36,6 +36,8 @@ class Controller{
         float m_lowspeed_angular = 0.5;
 
         bool enable_joy_output = true;
+        bool enable_low_speed = false;
+        bool enable_high_speed = true;
 
         // {rotate, up/down, left/right shift, forward/backward shift, 0, 0}
         float m_axes[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
@@ -117,6 +119,15 @@ void Controller :: joyCallback(const sensor_msgs::Joy::ConstPtr& msg){
     if(m_axes[5] == -1){ // joy arrow down
         srvGripper(false);
     }
+    if(m_buttons[4] == 1){// joy LB button
+        enable_high_speed = true;
+        enable_low_speed = false;
+    }
+    if(m_buttons[5] == 1){// joy RB button
+        enable_low_speed = true;
+        enable_high_speed = false;
+    }
+
 
     return;
 }
@@ -197,7 +208,7 @@ void Controller :: control(){
             linear  = m_highspeed_linear;
             angular = m_highspeed_angular;
         }
-        if(m_buttons[4] == 1){ //joy LB button
+        if(enable_high_speed || enable_low_speed){
             pub_msg_twist.angular.z = angular * m_axes[0];
             pub_msg_twist.linear.z = throttle * m_axes[1];
 
