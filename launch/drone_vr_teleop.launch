@@ -18,7 +18,7 @@
 
     <!-- vr control -->
     <node pkg="drone_teleop" type="drone_vr_teleop" name="drone_vr_teleop" clear_params="true" output="screen">
-        <remap from="drone_twist" to="mavros/setpoint_velocity/cmd_vel_unstamped"/>
+        <remap from="drone_twist" to="drone_twist"/>
         <rosparam file="$(find drone_teleop)/config/vr_param.yaml"/>
 
     </node>
