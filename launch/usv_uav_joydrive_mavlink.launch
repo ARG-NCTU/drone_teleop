@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="usv" default="jv1"/>
+  <arg name="uav" default="eg5"/>
+  <arg name="use_joy" default="true"/>
+
+  <!-- twist2thrust args -->
+  <arg name="linear_scaling" default="3.0"/>
+
+  <!-- moos_to_twist args -->
+  <!-- steering_angle and max_thrust_moos should be the same as .moos configured -->
+  <arg name="steering_angle" default="24"/> 
+  <arg name="max_thrust_moos" default="100"/>
+  <!-- max_linear_vel(m/s) and max_angular_vel(rad/s) decide how fast the boat react in gazebo -->
+  <arg name="max_linear_vel" default="5.0"/> 
+  <arg name="max_angular_vel" default="1.0"/>
+
+  <node pkg="joy" type="joy_node" name="joy" if="$(arg use_joy)">
+    <remap from="/joy" to="/$(arg usv)/joy"/>
+    <param name="dev" value="/dev/input/js0"/>
+    <param name="deadzone" value="0.1"/>
+    <param name="autorepeat_rate" value="10"/>
+  </node>
+
+  <group ns="$(arg usv)">
+    <node pkg="drone_gazebo" type="usv_uav_mavlink_joy_teleop.py" name="usv_uav_mavlink_joy_teleop" output="screen">
+      <!-- Remap twist topics -->
+      <!-- UAV twist -> MAVROS velocity command -->
+      <remap from="~twist_uav" to="/mavros/setpoint_velocity/cmd_vel_unstamped"/>
+
+      <!-- USV twist -> twist2thrust converter input -->
+      <remap from="~twist_usv" to="/$(arg usv)/cmd_vel"/>
+
+      <!-- Throttle parameters -->
+      <rosparam>
+        throttle_high_linear: 5.0
+        throttle_high_throttle: 2.0
+        throttle_high_angular: 5.0
+        throttle_low_linear: 0.5
+        throttle_low_throttle: 0.5
+        throttle_low_angular: 0.5
+        control_rate: 10.0
+      </rosparam>
+    </node>
+
+    <node pkg="jv_gazebo" type="twist2thrust_h_moos.py" name="twist2thrust" output="screen">
+      <param name="vessel_name" value="$(arg usv)"/>
+      <param name="linear_scaling" value="$(arg linear_scaling)"/>
+      <param name="max_steering_angle" value="$(arg steering_angle)"/>
+      <param name="thrust_deadzone" value="0.01" />
+      <param name="max_linear_vel" value="$(arg max_linear_vel)"/>
+      <param name="max_angular_vel" value="$(arg max_angular_vel)"/>
+      <param name="max_thrust" value="$(arg max_thrust_moos)" />
+      <remap from="control_mode" to="/$(arg usv)/control_mode"/>
+      <remap from="~left_cmd" to="/$(arg usv)/thrusters/left_thrust_cmd"/>
+      <remap from="~right_cmd" to="/$(arg usv)/thrusters/right_thrust_cmd"/>
+      <remap from="~left_ang_cmd" to="/$(arg usv)/thrusters/left_thrust_angle"/>
+      <remap from="~right_ang_cmd" to="/$(arg usv)/thrusters/right_thrust_angle"/>
+    </node>
+
+    <node pkg="jv_gazebo" type="moos_to_twist.py" name="moos_to_twist" output="screen">
+      <param name="boat" value="$(arg usv)"/>
+      <param name="max_thrust" value="$(arg max_thrust_moos)"/>
+      <param name="max_rudder" value="$(arg steering_angle)"/>
+      <param name="max_linear_vel" value="$(arg max_linear_vel)" />
+      <param name="max_angular_vel" value="$(arg max_angular_vel)" />
+    </node>
+  </group>
+</launch>
