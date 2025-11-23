@@ -23,7 +23,7 @@
   </node>
 
   <group ns="$(arg usv)">
-    <node pkg="drone_gazebo" type="usv_uav_mavlink_joy_teleop.py" name="usv_uav_mavlink_joy_teleop" output="screen">
+    <node pkg="drone_teleop" type="usv_uav_mavlink_joy_teleop.py" name="usv_uav_mavlink_joy_teleop" output="screen">
       <!-- Remap twist topics -->
       <!-- UAV twist -> MAVROS velocity command -->
       <remap from="~twist_uav" to="/mavros/setpoint_velocity/cmd_vel_unstamped"/>
